@@ -111,7 +111,7 @@ function computeRow(row) {
 const FMETA = {
   flc:      { label:"Full Load Current (FLC)",       expr:"FLC = (P × 1000) / (√3 × V × η × PF)",  desc:"3-phase motor current formula. P in kW, V in Volts, η = efficiency (decimal), PF = running power factor. Result in Amperes." },
   df:       { label:"Combined Derating Factor",       expr:"DF = F_airTemp × F_gndTemp × F_group × F_depth", desc:"Product of all individual derating factors per IS-1554 and POLYCAB correction tables. A value of 0.68 means the cable can only carry 68% of its catalogue current rating." },
-  reqR:     { label:"Required Catalogue Rating",      expr:"I_required = FLC / Combined DF",         desc:"Minimum base current rating needed from catalogue so that derated rating ≥ FLC after applying all derating factors." },
+  reqR:     { label:"Required Rating (per Cable Run)",expr:"I_required = FLC / (Combined DF × Runs)",   desc:"Minimum catalogue current rating needed per parallel run. When multiple runs are used, each cable only carries FLC÷Runs, so the required per-cable rating is lower. The catalogue selects the smallest size that meets this per-run figure." },
   size:     { label:"Selected Cable Size",            expr:"Min size where Catalogue Rating ≥ I_req", desc:"First cable in POLYCAB LT-XLPE 3.5C multicore catalogue that meets or exceeds the required rating for the given conductor and laying method." },
   deratedA: { label:"Derated Current Rating",        expr:"I_derated = Base Rating × DF × Runs",     desc:"Actual usable current capacity for this installation. Must be ≥ FLC for the cable to be adequate per IS-1554." },
   VD_run:   { label:"Running Voltage Drop (V)",       expr:"VD = I × L × (R·cosφ + X·sinφ) / (runs × 1000)",  desc:"3-phase line-to-line voltage drop. R and X from POLYCAB catalogue at 90°C. cosφ = running PF; sinφ = √(1 − PF²). L in meters, R in Ω/km." },
@@ -189,7 +189,7 @@ const thS = { padding:"7px 9px", textAlign:"center", fontWeight:700, fontSize:10
 const numFmt = (v, d=2) => v!=null&&!isNaN(v) ? Number(v).toFixed(d) : "—";
 const vdSt = (p, lim) => !p ? null : p>lim*1.5?"fail":p>lim?"warn":"pass";
 
-function CableSizingApp() {
+function CableSizingApp()  {
   const [tab, setTab] = useState("schedule");
   const [rows, setRows] = useState(INIT);
   const [nxtId, setNxtId] = useState(INIT.length+1);
@@ -816,7 +816,7 @@ function CableSizingApp() {
                   <div style={{marginTop:4}}>Combined = <span style={{color:C.accDk,fontWeight:700}}>{fPop.calc.df}</span></div>
                 </>}
                 {fPop.fKey==="reqR"&&fPop.calc.flc!=null&&
-                  <div>I_req = {numFmt(fPop.calc.flc)} ÷ {fPop.calc.df} = <span style={{color:C.accDk,fontWeight:700}}>{numFmt(fPop.calc.reqR,1)} A</span></div>}
+                  <div>I_req = {numFmt(fPop.calc.flc)} ÷ ({fPop.calc.df} × {fPop.calc.runs||1} run{(fPop.calc.runs||1)>1?"s":""}) = <span style={{color:C.accDk,fontWeight:700}}>{numFmt(fPop.calc.reqR,1)} A per cable</span></div>}
                 {fPop.fKey==="deratedA"&&fPop.calc.deratedA!=null&&<>
                   <div>Derated = {fPop.calc.baseA} × {fPop.calc.df} × runs</div>
                   <div>= <span style={{color:C.accDk,fontWeight:700}}>{numFmt(fPop.calc.deratedA)} A</span> (FLC = {numFmt(fPop.calc.flc)} A)</div>
