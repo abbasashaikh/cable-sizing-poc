@@ -189,7 +189,7 @@ const thS = { padding:"7px 9px", textAlign:"center", fontWeight:700, fontSize:10
 const numFmt = (v, d=2) => v!=null&&!isNaN(v) ? Number(v).toFixed(d) : "—";
 const vdSt = (p, lim) => !p ? null : p>lim*1.5?"fail":p>lim?"warn":"pass";
 
-function CableSizingApp()  {
+function CableSizingApp() {
   const [tab, setTab] = useState("schedule");
   const [rows, setRows] = useState(INIT);
   const [nxtId, setNxtId] = useState(INIT.length+1);
@@ -659,7 +659,14 @@ function CableSizingApp()  {
                 </div>
               ))}
               <div style={{background:C.surf,border:`1px solid ${C.bdr}`,borderRadius:6,overflow:"hidden"}}>
-                <SecHdr>C. CABLE GROUPING FACTORS (MULTICORE)</SecHdr>
+                <SecHdr>C. CABLE GROUPING FACTORS (MULTICORE) — IS-1554 / POLYCAB</SecHdr>
+                {/* Mapping note: explains why only 2 rows exist for 4 laying methods */}
+                <div style={{padding:"8px 16px 6px",background:"#fffbeb",borderBottom:`1px solid #fde68a`,fontSize:11,color:"#92400e",display:"flex",flexWrap:"wrap",gap:"10px",alignItems:"center"}}>
+                  <span style={{fontWeight:700}}>⚡ Standard defines exactly 2 grouping categories:</span>
+                  <span style={{background:"#dbeafe",borderRadius:4,padding:"2px 8px",color:"#1d4ed8",fontWeight:600}}>In Air → cables on open trays / free air  (F₄ = 1.00)</span>
+                  <span style={{background:"#d1fae5",borderRadius:4,padding:"2px 8px",color:"#065f46",fontWeight:600}}>In Ground → covers: In Trench (F₄=1.00)  •  In Duct (F₄=0.95)  •  Underground (F₄=0.91)</span>
+                  <span style={{color:"#78350f"}}>The additional F₄ factor for each method is shown in Section D below.</span>
+                </div>
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                     <thead>
@@ -673,16 +680,72 @@ function CableSizingApp()  {
                       </tr>
                     </thead>
                     <tbody>
-                      {[["In Air",GROUP_DF_AIR],["In Ground",GROUP_DF_GND]].map(([lbl,map])=>(
-                        <tr key={lbl} style={{borderBottom:`1px solid ${C.bdr}`}}>
-                          <td style={{padding:"8px 14px",fontWeight:600,color:C.sub,fontSize:11}}>{lbl}</td>
-                          {Object.entries(map).map(([n,v])=>(
-                            <td key={n} style={{padding:"8px 14px",textAlign:"center",fontFamily:"monospace",fontWeight:700,
-                              color:Number(n)===dv.numCables&&((lbl==="In Air"&&dv.laying==="In Air")||(lbl==="In Ground"&&dv.laying!=="In Air"))?"#78350f":C.txt,
-                              background:Number(n)===dv.numCables&&((lbl==="In Air"&&dv.laying==="In Air")||(lbl==="In Ground"&&dv.laying!=="In Air"))?"#fef3c7":"transparent"}}>{v}</td>
-                          ))}
-                        </tr>
-                      ))}
+                      {[["In Air",GROUP_DF_AIR,"In Air"],["In Ground",GROUP_DF_GND,"ground"]].map(([lbl,map,cat])=>{
+                        const isActive = cat==="In Air" ? dv.laying==="In Air" : dv.laying!=="In Air";
+                        // For the active "In Ground" row, show the actual selected method name as badge
+                        const activeMethodBadge = isActive && cat!=="In Air" && dv.laying!=="In Air"
+                          ? ` ← active (${dv.laying})` : "";
+                        return (
+                          <tr key={lbl} style={{borderBottom:`1px solid ${C.bdr}`,background:isActive?"#fffbeb":"transparent"}}>
+                            <td style={{padding:"8px 14px",fontWeight:700,fontSize:11,
+                              color:isActive?"#78350f":C.sub,
+                              background:isActive?"#fef9c3":"transparent",minWidth:160}}>
+                              {lbl}
+                              {activeMethodBadge&&<span style={{fontSize:10,color:"#92400e",fontWeight:600,marginLeft:4,background:"#fde68a",borderRadius:3,padding:"1px 5px"}}>{dv.laying}</span>}
+                            </td>
+                            {Object.entries(map).map(([n,v])=>(
+                              <td key={n} style={{padding:"8px 14px",textAlign:"center",fontFamily:"monospace",fontWeight:700,
+                                color:Number(n)===dv.numCables&&isActive?"#78350f":C.txt,
+                                background:Number(n)===dv.numCables&&isActive?"#fef3c7":"transparent"}}>{v}</td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* ── NEW: Section D — F4 Installation Method Factors ─────────────── */}
+              <div style={{background:C.surf,border:`1px solid ${C.bdr}`,borderRadius:6,overflow:"hidden"}}>
+                <SecHdr>D. F₄ — INSTALLATION METHOD FACTORS (DEPTH / ENCLOSURE)</SecHdr>
+                <div style={{padding:"8px 16px 6px",background:"#f0fdf4",borderBottom:`1px solid #bbf7d0`,fontSize:11,color:"#166534"}}>
+                  <span style={{fontWeight:700}}>Note: </span>F₄ corrects for the thermal effect of the installation enclosure/depth, independent of cable grouping.
+                  All four methods use the same F₃ grouping category (In Air or In Ground) — F₄ is the additional multiplier applied on top.
+                </div>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:"#d1fae5"}}>
+                        <th style={{padding:"7px 14px",textAlign:"left",color:"#065f46",fontWeight:700,fontSize:11}}>Laying Method</th>
+                        <th style={{padding:"7px 14px",textAlign:"center",color:"#065f46",fontWeight:700,fontSize:11}}>F₃ Grouping Table Used</th>
+                        <th style={{padding:"7px 14px",textAlign:"center",color:"#065f46",fontWeight:700,fontSize:11}}>F₄ Install Factor</th>
+                        <th style={{padding:"7px 14px",textAlign:"left",color:"#065f46",fontWeight:700,fontSize:11}}>Rationale (IS-1554)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["In Air",      "In Air (Table C, Row 1)",   "1.00", "Open trays / free air — best heat dissipation, no penalty"],
+                        ["In Trench",   "In Ground (Table C, Row 2)","1.00", "Open trench — ground grouping, but no depth reduction"],
+                        ["In Duct",     "In Ground (Table C, Row 2)","0.95", "Enclosed conduit — reduced airflow, 5% capacity reduction"],
+                        ["Underground", "In Ground (Table C, Row 2)","0.91", "Direct buried — worst heat dissipation, 9% capacity reduction"],
+                      ].map(([method,grp,f4,rationale],i)=>{
+                        const isActive = dv.laying===method;
+                        return (
+                          <tr key={method} style={{borderBottom:`1px solid ${C.bdr}`,background:isActive?"#dcfce7":"transparent"}}>
+                            <td style={{padding:"9px 14px",fontWeight:700,fontSize:12,
+                              color:isActive?"#166534":C.txt}}>
+                              {method}
+                              {isActive&&<span style={{marginLeft:6,fontSize:10,background:"#16a34a",color:"white",borderRadius:3,padding:"1px 6px",fontWeight:700}}>ACTIVE</span>}
+                            </td>
+                            <td style={{padding:"9px 14px",textAlign:"center",fontSize:11,color:isActive?"#166534":C.sub,fontWeight:isActive?700:400}}>{grp}</td>
+                            <td style={{padding:"9px 14px",textAlign:"center",fontFamily:"monospace",fontWeight:700,fontSize:13,
+                              color:isActive?"#166534":C.txt,
+                              background:isActive?"#bbf7d0":"transparent"}}>{f4}</td>
+                            <td style={{padding:"9px 14px",fontSize:11,color:isActive?"#166534":C.sub}}>{rationale}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
