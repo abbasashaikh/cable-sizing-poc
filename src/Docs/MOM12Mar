@@ -1,0 +1,25 @@
+MOM 13 Mar 2026
+----------------
+Main points from the audio meeting (Cable Sizing POC) are:
+
+The speaker explains temperature derating factors for cables: how current rating must be multiplied by factors for air temperature, ground temperature, grouping, and laying method, and that all these factors are combined by multiplication.
+​
+
+They clarify that derating factors differ by installation type (in air vs underground vs duct) and by cable make and insulation (XLPE vs PVC, different vendors like Polycab, KEI), so each vendor’s catalogue may have slightly different values.
+​
+
+They describe how the system should pick resistance (R), reactance (X) and current ratings from the correct cable catalogue chart based on: number of cores, cable type, material (Al/Cu), size, make, and laying condition.
+​
+
+For calculations, only a few key parameters are finally needed from the catalogue: current in air, current in ground, resistance and reactance, with current being temperature‑dependent but resistance/reactance mostly material and size dependent.
+​
+
+They discuss data‑model changes: cable schedule should store enough fields (type of laying, number of cores, size, material, make) so the app can automatically fetch the right R, X, and derating factors from lookup sheets.
+​
+
+There is also talk about future enhancements: allowing manual selection/override of the next or previous cable size via a dropdown, and later auto‑picking motor parameters from motor catalogues based on kW, efficiency class, and manufacturer.
+​
+
+The meeting ends with action items: implement the discussed changes and fine‑tuning in the app, deploy to an online environment so all can test, and use this as Phase‑1 base working before adding more advanced automation.
+​
+
