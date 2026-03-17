@@ -1,27 +1,28 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
 // ═══════════════════════════════════════════════════════════════════
 //  REFERENCE DATA  — sourced directly from Cable_Sizing_CalculationsTEST.xlsx
 // ═══════════════════════════════════════════════════════════════════
 
+// CHG-005
 const CATALOGUE = [
-  { size:1.5,  R_cu:15.50, R_al:23.17, X:0.110, cu_gnd:25,  cu_air:22,  al_gnd:25,  al_air:22  },
-  { size:2.5,  R_cu:9.48,  R_al:15.50, X:0.107, cu_gnd:34,  cu_air:30,  al_gnd:34,  al_air:30  },
-  { size:4,    R_cu:5.90,  R_al:9.48,  X:0.105, cu_gnd:43,  cu_air:36,  al_gnd:34,  al_air:31  },
-  { size:6,    R_cu:3.94,  R_al:5.90,  X:0.103, cu_gnd:54,  cu_air:47,  al_gnd:43,  al_air:50  },
-  { size:10,   R_cu:2.34,  R_al:3.94,  X:0.100, cu_gnd:72,  cu_air:62,  al_gnd:57,  al_air:67  },
-  { size:16,   R_cu:1.47,  R_al:2.44,  X:0.098, cu_gnd:92,  cu_air:79,  al_gnd:73,  al_air:70  },
-  { size:25,   R_cu:0.930, R_al:1.540, X:0.089, cu_gnd:119, cu_air:108, al_gnd:94,  al_air:96  },
-  { size:35,   R_cu:0.671, R_al:1.110, X:0.083, cu_gnd:144, cu_air:132, al_gnd:113, al_air:117 },
-  { size:50,   R_cu:0.495, R_al:0.820, X:0.079, cu_gnd:174, cu_air:162, al_gnd:133, al_air:142 },
-  { size:70,   R_cu:0.343, R_al:0.567, X:0.075, cu_gnd:210, cu_air:198, al_gnd:164, al_air:179 },
-  { size:95,   R_cu:0.247, R_al:0.410, X:0.074, cu_gnd:252, cu_air:240, al_gnd:196, al_air:221 },
-  { size:120,  R_cu:0.196, R_al:0.324, X:0.072, cu_gnd:288, cu_air:276, al_gnd:223, al_air:257 },
-  { size:150,  R_cu:0.159, R_al:0.264, X:0.072, cu_gnd:324, cu_air:318, al_gnd:249, al_air:292 },
-  { size:185,  R_cu:0.127, R_al:0.210, X:0.071, cu_gnd:360, cu_air:366, al_gnd:282, al_air:337 },
-  { size:240,  R_cu:0.098, R_al:0.160, X:0.071, cu_gnd:414, cu_air:426, al_gnd:326, al_air:399 },
-  { size:300,  R_cu:0.077, R_al:0.128, X:0.070, cu_gnd:462, cu_air:480, al_gnd:367, al_air:455 },
-  { size:400,  R_cu:0.062, R_al:0.100, X:0.069, cu_gnd:510, cu_air:546, al_gnd:418, al_air:530 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:1.5,  R_cu:15.50, R_al:23.17, X:0.110, cu_gnd:25,  cu_air:22,  al_gnd:25,  al_air:22  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:2.5,  R_cu:9.48,  R_al:15.50, X:0.107, cu_gnd:34,  cu_air:30,  al_gnd:34,  al_air:30  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:4,    R_cu:5.90,  R_al:9.48,  X:0.105, cu_gnd:43,  cu_air:36,  al_gnd:34,  al_air:31  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:6,    R_cu:3.94,  R_al:5.90,  X:0.103, cu_gnd:54,  cu_air:47,  al_gnd:43,  al_air:50  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:10,   R_cu:2.34,  R_al:3.94,  X:0.100, cu_gnd:72,  cu_air:62,  al_gnd:57,  al_air:67  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:16,   R_cu:1.47,  R_al:2.44,  X:0.098, cu_gnd:92,  cu_air:79,  al_gnd:73,  al_air:70  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:25,   R_cu:0.930, R_al:1.540, X:0.089, cu_gnd:119, cu_air:108, al_gnd:94,  al_air:96  },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:35,   R_cu:0.671, R_al:1.110, X:0.083, cu_gnd:144, cu_air:132, al_gnd:113, al_air:117 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:50,   R_cu:0.495, R_al:0.820, X:0.079, cu_gnd:174, cu_air:162, al_gnd:133, al_air:142 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:70,   R_cu:0.343, R_al:0.567, X:0.075, cu_gnd:210, cu_air:198, al_gnd:164, al_air:179 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:95,   R_cu:0.247, R_al:0.410, X:0.074, cu_gnd:252, cu_air:240, al_gnd:196, al_air:221 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:120,  R_cu:0.196, R_al:0.324, X:0.072, cu_gnd:288, cu_air:276, al_gnd:223, al_air:257 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:150,  R_cu:0.159, R_al:0.264, X:0.072, cu_gnd:324, cu_air:318, al_gnd:249, al_air:292 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:185,  R_cu:0.127, R_al:0.210, X:0.071, cu_gnd:360, cu_air:366, al_gnd:282, al_air:337 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:240,  R_cu:0.098, R_al:0.160, X:0.071, cu_gnd:414, cu_air:426, al_gnd:326, al_air:399 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:300,  R_cu:0.077, R_al:0.128, X:0.070, cu_gnd:462, cu_air:480, al_gnd:367, al_air:455 },
+  { make:"POLYCAB", insulation:"XLPE", cores:3.5, size:400,  R_cu:0.062, R_al:0.100, X:0.069, cu_gnd:510, cu_air:546, al_gnd:418, al_air:530 },
 ];
 
 const AIR_TEMP_DF  = { 25:1.14, 30:1.10, 35:1.04, 40:1.00, 45:0.95, 50:0.90, 55:0.85 };
@@ -36,6 +37,9 @@ const VOLTAGES       = [415,1100,3300,6600,11000];
 const AIR_TEMPS      = [25,30,35,40,45,50,55];
 const GND_TEMPS      = [15,20,25,30,35,40,45];
 const GROUP_COUNTS   = [1,2,3,4,5,6,9,12];
+const MAKE_OPTS=[{value:"POLYCAB",label:"POLYCAB"},{value:"KEI",label:"KEI (coming soon)",disabled:true},{value:"KEC-RPG",label:"KEC-RPG (coming soon)",disabled:true}];
+const INS_OPTS=[{value:"XLPE",label:"XLPE"},{value:"PVC",label:"PVC (coming soon)",disabled:true}];
+const CORE_OPTS=[{value:3,label:"3C"},{value:3.5,label:"3.5C"},{value:4,label:"4C"}];
 
 // ═══════════════════════════════════════════════════════════════════
 //  CALCULATION ENGINE
@@ -69,10 +73,11 @@ function calcDF(airT, gndT, nCables, laying) {
   return { fA, fG, fGrp, fDep, combined:+((fA*fG*fGrp*fDep).toFixed(4)) };
 }
 
-function pickCable(reqRating, material, laying) {
+// CHG-009
+function pickCable(reqRating, material, laying, make="POLYCAB", insulation="XLPE", cores=3.5) {
   const isAir = laying==="In Air";
   const key = material==="CU"?(isAir?"cu_air":"cu_gnd"):(isAir?"al_air":"al_gnd");
-  return CATALOGUE.find(c=>typeof c[key]==="number"&&c[key]>=reqRating)??null;
+  return CATALOGUE.filter(c=>c.make===make&&c.insulation===insulation&&c.cores===cores).find(c=>typeof c[key]==="number"&&c[key]>=reqRating)??null;
 }
 
 function calcVD(flc, length, R, X, pf, isRatio, runs) {
@@ -85,14 +90,16 @@ function calcVD(flc, length, R, X, pf, isRatio, runs) {
   };
 }
 
-function computeRow(row) {
-  const { kw, length, eff, pf, isRatio, laying, numCables, runs, material, voltage, airTemp, gndTemp } = row;
+// CHG-010/011
+function computeRow(row, proj) {
+  const { kw, length, eff, pf, isRatio, laying, numCables, runs, material, voltage, make, insulation, cores, overrideSize } = row;
+  const airTemp=proj?.airTemp??50; const gndTemp=proj?.gndTemp??30;
   const flc = calcFLC(kw, voltage, eff/100, pf);
   if (!flc||isNaN(flc)) return {};
   const df = calcDF(airTemp, gndTemp, numCables, laying);
   const reqR = flc/df.combined;
-  const cable = pickCable(reqR, material, laying);
-  if (!cable) return { flc:+flc.toFixed(2), df:df.combined, dfBreak:df, noMatch:true };
+  const cable=overrideSize!=null?(CATALOGUE.find(c=>c.make===make&&c.insulation===insulation&&c.cores===cores&&c.size===overrideSize)??null):pickCable(reqR,material,laying,make,insulation,cores);
+  if (!cable) return { flc:+flc.toFixed(2), df:df.combined, dfBreak:df, reqR:+reqR.toFixed(1), noMatch:true };
   const R  = material==="CU"?cable.R_cu:cable.R_al;
   const X  = cable.X;
   const bk = material==="CU"?(laying==="In Air"?"cu_air":"cu_gnd"):(laying==="In Air"?"al_air":"al_gnd");
@@ -104,7 +111,7 @@ function computeRow(row) {
     size:cable.size, baseA, deratedA, R, X,
     VD_run, VD_run_pct:+((VD_run/voltage)*100).toFixed(3),
     VD_start, VD_start_pct:+((VD_start/voltage)*100).toFixed(3),
-    ok: deratedA>=flc,
+    isOverride:overrideSize!=null, ok:deratedA>=flc,
   };
 }
 
@@ -160,8 +167,8 @@ const DB_TABLES = [
 ];
 
 // ── Initial schedule rows (from Excel workbook sample data) ─────────
-const mk = (id,tag,desc,kw,len,eff,pf,isr,laying,nCab,runs,mat,feeder,V=415,aT=50,gT=30) =>
-  ({id,tag,desc,kw,length:len,eff,pf,isRatio:isr,laying,numCables:nCab,runs,material:mat,feeder,voltage:V,airTemp:aT,gndTemp:gT,errs:{}});
+// CHG-001/002/006-8/011
+const mk=(id,tag,desc,kw,len,eff,pf,isr,laying,nCab,runs,mat,feeder,V=415)=>({id,tag,desc,kw,length:len,eff,pf,isRatio:isr,laying,numCables:nCab,runs,material:mat,feeder,voltage:V,make:"POLYCAB",insulation:"XLPE",cores:3.5,overrideSize:null,errs:{}});
 
 const INIT = [
   mk(1,"CB-004","LSP-3 Pump",       22,  450,93.5,0.72,4,"In Air",    3,1,"AL","DOL"),
@@ -189,20 +196,95 @@ const thS = { padding:"7px 9px", textAlign:"center", fontWeight:700, fontSize:10
 const numFmt = (v, d=2) => v!=null&&!isNaN(v) ? Number(v).toFixed(d) : "—";
 const vdSt = (p, lim) => !p ? null : p>lim*1.5?"fail":p>lim?"warn":"pass";
 
+// ═══════════════════════════════════════════════════════════════════
+//  InCell — MODULE LEVEL (outside CableSizingApp).
+//
+//  BUG 2 ROOT CAUSE: InCell was a const INSIDE CableSizingApp().
+//  Every keystroke → updRow → setRows → parent re-renders → InCell
+//  reference changes → React unmounts+remounts DOM input → focus lost.
+//
+//  FIX: Module-level definition (stable reference) + local draft state.
+//  onChange updates draft only (no global re-render while typing).
+//  onBlur / Enter / Tab commits value to global state.
+// ═══════════════════════════════════════════════════════════════════
+function InCell({ id, field, val, opts, type="number", min, max, step, errs, updRow }) {
+  const hasE = errs && errs[field];
+  const [draft, setDraft] = useState(String(val ?? ""));
+  const lastCommitted = useRef(String(val ?? ""));
+
+  useEffect(() => {
+    const incoming = String(val ?? "");
+    if (incoming !== lastCommitted.current) {
+      setDraft(incoming);
+      lastCommitted.current = incoming;
+    }
+  }, [val]);
+
+  const commit=(raw)=>{
+    const coerced=opts?(isNaN(raw)?raw:Number(raw)):(type==="number"?(parseFloat(raw)||0):raw);
+    lastCommitted.current=String(raw);
+    updRow(id,field,coerced);
+  };
+
+  const borderColor = hasE ? C.errBdr : C.bdr;
+  const bg = hasE ? C.errBg : C.surf;
+
+  if (opts) {
+    return (
+      <td style={{padding:2,border:`1px solid ${borderColor}`,background:bg}}>
+        <select value={draft}
+          onChange={e=>{setDraft(e.target.value);commit(e.target.value);}}
+          style={{border:"none",background:"transparent",width:"100%",padding:"5px 4px",
+                  fontSize:11,fontFamily:"inherit",color:C.txt,outline:"none"}}>
+          {opts.map(o=>typeof o==="object"?<option key={o.value} value={o.value} disabled={o.disabled??false}>{o.label}</option>:<option key={o} value={o}>{o}</option>)}
+        </select>
+      </td>
+    );
+  }
+
+  return (
+    <td style={{padding:2,border:`1px solid ${borderColor}`,background:bg}}>
+      <input type={type} value={draft} min={min} max={max} step={step??"any"}
+        onChange={e=>setDraft(e.target.value)}
+        onBlur={e=>commit(e.target.value)}
+        onKeyDown={e=>{if(e.key==="Enter"||e.key==="Tab") commit(e.target.value);}}
+        style={{border:"none",background:"transparent",width:"100%",padding:"5px 4px",
+                fontSize:11,fontFamily:"monospace",color:hasE?C.errTxt:C.txt,
+                outline:"none",textAlign:"right"}}/>
+      {hasE&&<div style={{fontSize:9,color:C.errTxt,paddingLeft:4,paddingBottom:2}}>{errs[field]}</div>}
+    </td>
+  );
+}
+
+// CHG-011
+function SizeCell({row,autoSize,updRow}){
+  const isOvr=row.overrideSize!=null;
+  const avail=CATALOGUE.filter(c=>c.make===row.make&&c.insulation===row.insulation&&c.cores===row.cores).map(c=>c.size);
+  return(<td title={isOvr?"Override active":"Auto. Dropdown to override."} style={{padding:2,border:`1px solid ${isOvr?"#fde68a":C.calcBdr}`,background:isOvr?"#fffbeb":C.calcBg,minWidth:76}}>
+    <select value={row.overrideSize??"auto"} onChange={e=>updRow(row.id,"overrideSize",e.target.value==="auto"?null:Number(e.target.value))}
+      style={{border:"none",background:"transparent",width:"100%",padding:"4px",fontSize:11,fontFamily:"monospace",fontWeight:700,color:isOvr?"#d97706":C.calcTxt,outline:"none",cursor:"pointer"}}>
+      <option value="auto">{autoSize!=null?`${autoSize}mm²★`:"N/A"}</option>
+      {avail.map(s=><option key={s} value={s}>{s}mm²{s===autoSize?"★":""}</option>)}
+    </select>
+    <div style={{fontSize:8,color:isOvr?"#d97706":C.muted,paddingLeft:4}}>{isOvr?"▲override":"autoƒ"}</div>
+  </td>);
+}
+
 function CableSizingApp() {
   const [tab, setTab] = useState("schedule");
   const [rows, setRows] = useState(INIT);
   const [nxtId, setNxtId] = useState(INIT.length+1);
   const [fPop, setFPop] = useState(null);
-  const [proj, setProj] = useState({ocNo:"630276",ocName:"VSP – WWTP Area",rev:3,voltage:415,freq:50,std:"IS-1554 / IS-732"});
+  const [proj, setProj] = useState({ocNo:"630276",ocName:"VSP – WWTP Area",rev:3,voltage:415,freq:50,std:"IS-1554 / IS-732",airTemp:50,gndTemp:30});
+  const [catFilter,setCatFilter]=useState({make:"POLYCAB",insulation:"XLPE",cores:3.5});
   const [mc, setMc] = useState({kw:30,voltage:415,eff:88,pf:0.88,isRatio:7.2,length:143,material:"AL",laying:"In Air",numCables:6,airTemp:50,gndTemp:30,runs:1});
   const [dv, setDv] = useState({airTemp:50,gndTemp:30,numCables:6,laying:"In Air"});
 
   const results = useMemo(() => {
     const m={};
-    rows.forEach(r=>{m[r.id]=computeRow(r);});
+    rows.forEach(r=>{m[r.id]=computeRow(r,proj);});
     return m;
-  },[rows]);
+  },[rows,proj]);
 
   const mcFLC = useMemo(()=>calcFLC(mc.kw,mc.voltage,mc.eff/100,mc.pf),[mc]);
   const mcDF  = useMemo(()=>calcDF(mc.airTemp,mc.gndTemp,mc.numCables,mc.laying),[mc]);
@@ -221,6 +303,7 @@ function CableSizingApp() {
     setRows(prev=>prev.map(r=>{
       if(r.id!==id) return r;
       const u={...r,[field]:val};
+      if(["make","insulation","cores"].includes(field)) u.overrideSize=null;
       const e={};
       if(!u.kw||u.kw<=0)          e.kw="Required, > 0 kW";
       if(!u.length||u.length<=0)   e.length="Required, > 0 m";
@@ -260,26 +343,6 @@ function CableSizingApp() {
       <span style={{color:"#93c5fd",fontSize:9,marginLeft:2}}>ƒ</span>
     </td>
   );
-
-  const InCell = ({id,field,val,opts,type="number",min,max,step,errs})=>{
-    const hasE=errs&&errs[field];
-    return (
-      <td style={{padding:2,border:`1px solid ${C.bdr}`,background:hasE?C.errBg:C.surf}}>
-        {opts?(
-          <select value={val} onChange={e=>updRow(id,field,isNaN(e.target.value)?e.target.value:Number(e.target.value))}
-            style={{border:"none",background:"transparent",width:"100%",padding:"5px 4px",fontSize:11,fontFamily:"inherit",color:C.txt,outline:"none"}}>
-            {opts.map(o=><option key={o} value={o}>{o}</option>)}
-          </select>
-        ):(
-          <input type={type} value={val} min={min} max={max} step={step??"any"}
-            onChange={e=>updRow(id,field,type==="number"?parseFloat(e.target.value)||0:e.target.value)}
-            style={{border:"none",background:"transparent",width:"100%",padding:"5px 4px",fontSize:11,
-                    fontFamily:"monospace",color:hasE?C.errTxt:C.txt,outline:"none",textAlign:"right"}}/>
-        )}
-        {hasE&&<div style={{fontSize:9,color:C.errTxt,paddingLeft:4,paddingBottom:2}}>{errs[field]}</div>}
-      </td>
-    );
-  };
 
   const FRow = ({label,val,unit,calc,note,fKey,calcData})=>(
     <tr style={{borderBottom:`1px solid ${C.bdr}`}}>
@@ -367,6 +430,20 @@ function CableSizingApp() {
                     onFocus={e=>e.target.style.borderColor="#2563eb"} onBlur={e=>e.target.style.borderColor=C.bdr}/>
                 </div>
               ))}
+              <div style={{gridColumn:"1/-1",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6,padding:"12px 16px",marginTop:4}}>
+                <div style={{fontSize:10,color:"#1e40af",fontWeight:700,marginBottom:10}}>🌡 SITE CONDITIONS — F1/F2 derating for all cables in project</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                  {[{label:"Air Temp",key:"airTemp",opts:AIR_TEMPS},{label:"Ground Temp",key:"gndTemp",opts:GND_TEMPS}].map(f=>(
+                    <div key={f.key}>
+                      <label style={{fontSize:10,color:C.sub,fontWeight:700,display:"block",marginBottom:5}}>{f.label.toUpperCase()} (°C)</label>
+                      <select value={proj[f.key]} onChange={e=>setProj(p=>({...p,[f.key]:Number(e.target.value)}))}
+                        style={{width:"100%",padding:"9px 12px",border:`1px solid ${C.bdr}`,borderRadius:5,fontSize:13,fontFamily:"inherit",background:"#f8fafc"}}>
+                        {f.opts.map(v=><option key={v} value={v}>{v}°C</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div style={{margin:"0 24px 24px",background:C.passBg,border:`1px solid #86efac`,borderRadius:6,padding:"10px 14px",fontSize:11,color:C.passTxt}}>
               ✅ <b>Key Principle:</b> All fields here are editable inputs. Blue cells on other sheets are <i>calculated outputs</i> — locked from editing, recomputed automatically by the backend engine whenever inputs change.
@@ -401,12 +478,12 @@ function CableSizingApp() {
                 <thead>
                   <tr style={{background:C.hdr,color:"#f1f5f9"}}>
                     <th style={thS} rowSpan={2}>#</th>
-                    <th style={{...thS,background:"#1e40af"}} colSpan={13}>INPUT PARAMETERS — Editable</th>
+                    <th style={{...thS,background:"#1e40af"}} colSpan={16}>INPUT PARAMETERS — Editable</th>
                     <th style={{...thS,background:"#065f46"}} colSpan={9}>CALCULATED RESULTS — Click ƒ to view formula</th>
                     <th style={thS} rowSpan={2}></th>
                   </tr>
                   <tr style={{background:"#1e293b",color:"#cbd5e1",fontSize:10}}>
-                    {["Tag","Description","kW","V","Feeder","m","η%","PF","Is/In","Laying","In\nGrp","Runs","Mat"].map(h=>(
+                    {["Tag","Description","kW","V","Feeder","Length(m)","η%","PF","Is/In","Laying","In\nGrp","Runs","Mat","Make","Ins.","Cores"].map(h=>(
                       <th key={h} style={{...thS,background:"#1e40af",whiteSpace:"pre",padding:"5px 8px"}}>{h}</th>
                     ))}
                     {["FLC\n(A)","DF","Req'd\n(A)","Size\nmm²","Base\n(A)","Derated\n(A)","R\nΩ/km","VD Run\nV / %","VD Start\nV / %"].map(h=>(
@@ -422,23 +499,26 @@ function CableSizingApp() {
                     return (
                       <tr key={row.id} className="drow" style={{borderBottom:`1px solid ${C.bdr}`}}>
                         <td style={{padding:"5px 8px",textAlign:"center",color:C.muted,fontSize:10,background:"#f8fafc",borderRight:`1px solid ${C.bdr}`,fontWeight:700}}>{ri+1}</td>
-                        <InCell id={row.id} field="tag"       val={row.tag}       type="text" errs={row.errs}/>
-                        <InCell id={row.id} field="desc"      val={row.desc}      type="text" errs={row.errs}/>
-                        <InCell id={row.id} field="kw"        val={row.kw}        min={0.1}   errs={row.errs}/>
-                        <InCell id={row.id} field="voltage"   val={row.voltage}   opts={VOLTAGES} errs={row.errs}/>
-                        <InCell id={row.id} field="feeder"    val={row.feeder}    opts={FEEDER_TYPES} errs={row.errs}/>
-                        <InCell id={row.id} field="length"    val={row.length}    min={1}     errs={row.errs}/>
-                        <InCell id={row.id} field="eff"       val={row.eff}       min={50} max={100} step={0.1} errs={row.errs}/>
-                        <InCell id={row.id} field="pf"        val={row.pf}        min={0.1} max={1} step={0.01} errs={row.errs}/>
-                        <InCell id={row.id} field="isRatio"   val={row.isRatio}   min={1} max={15} step={0.1} errs={row.errs}/>
-                        <InCell id={row.id} field="laying"    val={row.laying}    opts={LAYING_METHODS} errs={row.errs}/>
-                        <InCell id={row.id} field="numCables" val={row.numCables} min={1} max={20} step={1} errs={row.errs}/>
-                        <InCell id={row.id} field="runs"      val={row.runs}      min={1} max={20} step={1} errs={row.errs}/>
-                        <InCell id={row.id} field="material"  val={row.material}  opts={MATERIALS} errs={row.errs}/>
+                        <InCell id={row.id} field="tag"       val={row.tag}       type="text" errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="desc"      val={row.desc}      type="text" errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="kw"        val={row.kw}        min={0.1}   errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="voltage"   val={row.voltage}   opts={VOLTAGES} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="feeder"    val={row.feeder}    opts={FEEDER_TYPES} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="length"    val={row.length}    min={1}     errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="eff"       val={row.eff}       min={50} max={100} step={0.1} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="pf"        val={row.pf}        min={0.1} max={1} step={0.01} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="isRatio"   val={row.isRatio}   min={1} max={15} step={0.1} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="laying"    val={row.laying}    opts={LAYING_METHODS} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="numCables" val={row.numCables} min={1} max={20} step={1} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="runs"      val={row.runs}      min={1} max={20} step={1} errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="material"   val={row.material}   opts={MATERIALS}  errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="make"        val={row.make}       opts={MAKE_OPTS}  errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="insulation"  val={row.insulation} opts={INS_OPTS}   errs={row.errs} updRow={updRow}/>
+                        <InCell id={row.id} field="cores"       val={row.cores}      opts={CORE_OPTS}  errs={row.errs} updRow={updRow}/>
                         <CalcTd val={numFmt(c.flc)} fKey="flc" calc={c}/>
                         <CalcTd val={numFmt(c.df,4)} fKey="df" calc={c}/>
                         <CalcTd val={numFmt(c.reqR,1)} fKey="reqR" calc={c}/>
-                        <CalcTd val={c.size??<span style={{color:C.errTxt}}>N/A</span>} fKey="size" calc={c}/>
+                        <SizeCell row={row} autoSize={c.noMatch?null:c.size} updRow={updRow}/>
                         <CalcTd val={c.baseA??<span style={{color:C.muted}}>—</span>} fKey="size" calc={c}/>
                         <CalcTd val={c.deratedA!=null?numFmt(c.deratedA):"—"} fKey="deratedA" calc={c}
                           extraStyle={{color:c.ok===false?C.errTxt:c.ok?C.passTxt:C.calcTxt,fontWeight:700}}/>
@@ -761,7 +841,17 @@ function CableSizingApp() {
               ⚠ <b>Master / Reference Data</b> — Admin-managed only. Users cannot edit catalogue values. Changes replicated to all calculations automatically.
             </div>
             <div style={{background:C.surf,border:`1px solid ${C.bdr}`,borderRadius:8,overflow:"hidden"}}>
-              <SecHdr>📖 POLYCAB LT-XLPE 3.5C ARMOURED — Current Ratings (A) & Impedance · IS-8130/1984 · 90°C Rated</SecHdr>
+              <SecHdr>📖 CABLE CATALOGUE — Admin-Managed · IS-8130/1984 · 90°C Rated</SecHdr>
+              <div style={{padding:"10px 16px",background:"#f8fafc",borderBottom:`1px solid ${C.bdr}`,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+                <b style={{fontSize:11,color:C.sub}}>Filter:</b>
+                {[{lbl:"Make",key:"make",opts:MAKE_OPTS},{lbl:"Ins",key:"insulation",opts:INS_OPTS},{lbl:"Cores",key:"cores",opts:CORE_OPTS}].map(f=>(
+                  <span key={f.key} style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,color:C.muted}}>{f.lbl}:</span>
+                    <select value={catFilter[f.key]} onChange={e=>setCatFilter(p=>({...p,[f.key]:isNaN(e.target.value)?e.target.value:Number(e.target.value)}))}
+                      style={{padding:"4px 8px",border:`1px solid ${C.bdr}`,borderRadius:4,fontSize:11}}>
+                      {f.opts.map(o=>typeof o==="object"?<option key={o.value} value={o.value} disabled={o.disabled??false}>{o.label}</option>:<option key={o} value={o}>{o}</option>)}
+                    </select></span>
+                ))}
+              </div>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                   <thead>
@@ -782,7 +872,7 @@ function CableSizingApp() {
                     </tr>
                   </thead>
                   <tbody>
-                    {CATALOGUE.map((r,i)=>(
+                    {CATALOGUE.filter(c=>c.make===catFilter.make&&c.insulation===catFilter.insulation&&c.cores===catFilter.cores).map((r,i)=>(
                       <tr key={r.size} style={{background:i%2===0?C.surf:"#f8fafc",borderBottom:`1px solid ${C.bdr}`}}>
                         <td style={{padding:"8px 12px",fontWeight:700,color:C.accDk,fontFamily:"monospace",textAlign:"center"}}>{r.size}</td>
                         <td style={{padding:"8px 12px",textAlign:"center",fontFamily:"monospace"}}>{r.cu_gnd}</td>
@@ -904,7 +994,7 @@ function CableSizingApp() {
 
       {/* STATUS BAR */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:C.hdr,color:"#64748b",fontSize:10,padding:"4px 24px",display:"flex",justifyContent:"space-between",zIndex:50}}>
-        <span>Cable Sizing Safe Web Calculator · POC v1.0 · Excel→Web Conversion · {rows.length} cables loaded</span>
+        <span>Cable Sizing Safe Web Calculator · v2.0 · Excel→Web Conversion · {rows.length} cables loaded</span>
         <span>Stack: React 18 + .NET 8 + PostgreSQL + Redis · POLYCAB IS-8130/1984 · IS-1554 / IS-732</span>
       </div>
     </div>
